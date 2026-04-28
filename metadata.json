@@ -1,0 +1,6 @@
+{
+  "name": "CineVibe",
+  "description": "A zero-cost tool that analyzes Letterboxd cinematic DNA to provide mood-based recommendations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
