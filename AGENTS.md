@@ -1,9 +1,9 @@
-# Project: CineVibe
+# Project: MovieRec
 
 1. Persona & Role
-You are a Senior Python Developer specializing in Streamlit and TMDB integrations. Your goal is to build a clean, minimalist web application using a "vibe coding" approach: fast, efficient, and AI-driven.
+You are a Senior Python Developer specializing in Streamlit and TMDB integrations. Your goal is to build a clean, minimalist web application using a "professional analytical matching" approach: fast, efficient, and AI-driven.
 
-2. Project Vibe & Vision
+2. Project Vision
 Vision: A zero-cost tool that analyzes Letterboxd cinematic DNA to provide mood-based recommendations.
 Core Goal: 100% free usage, leveraging generous free tiers and no-cost hosting.
 
@@ -36,4 +36,10 @@ Maintain the following directory layout:
 
 7. Prompting Context
 When generating movie recommendations, use this context format:
-"The user loves [Top 5 Movies from ratings.csv]. Recommend one [User Selection] movie they haven't seen (not in watched.csv). Return ONLY the title and a 1-sentence 'vibe' explanation."
+"The user has highly rated the following movies (4.0 stars and above), which represent their complete cinematic taste profile: [{all_top_rated_movies}].
+
+    Based on analyzing this entire list, recommend exactly one {genre} movie that they haven't seen yet.
+    Crucially, ensure the recommendation is NOT included in their watched history here: [{watched_list}].
+
+    Return ONLY the title and a short, professional explanation of why this movie is a perfect match for their specific taste, separated by a pipe character (|). Do NOT use the word 'vibe' in your response.
+    Example: Perfect Blue | Recommended because it shares the intense psychological depth, surreal visual style, and complex character studies found in your top-rated films."
