@@ -3,3 +3,4 @@ pandas>=2.2.1
 requests>=2.31.0
 colorthief>=0.2.2
 pillow>=10.1.0
+streamlit-javascript
