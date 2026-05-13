@@ -12,7 +12,7 @@ from colorthief import ColorThief
 from streamlit_javascript import st_javascript
 
 # ---- CONFIGURATION ----
-st.set_page_config(page_title="MovieRec", page_icon="🎬", layout="centered")
+st.set_page_config(page_title="MovieRec", page_icon="🎬", layout="wide")
 
 # Updated minimalist styling for "Immersive UI"
 st.markdown("""
@@ -57,7 +57,6 @@ st.markdown("""
     }
 
     /* Secondary Feedback Buttons (Outline Style) */
-    /* Target the feedback columns buttons specifically */
     div[data-testid="column"] div.stButton > button {
         background-color: transparent;
         color: #a1a1aa;
@@ -83,6 +82,12 @@ st.markdown("""
     [data-testid="stMetricValue"] {
         color: #ea580c !important;
         font-weight: 700;
+    }
+
+    /* Container Width */
+    .block-container {
+        max-width: 1200px;
+        padding-top: 2rem;
     }
     </style>
 """, unsafe_allow_html=True)
