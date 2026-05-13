@@ -240,9 +240,12 @@ with st.sidebar:
                 st.session_state.active_rec = None
                 st.session_state.trigger_reroll = False
                 st.session_state.local_storage_checked = False
-                st.session_state.clear_requested = True
-                st_javascript("localStorage.removeItem('movieRecData');")
-                st.rerun()
+                st.components.v1.html("""
+                    <script>
+                        localStorage.clear();
+                        window.parent.location.reload();
+                    </script>
+                """, height=0)
         else:
             st.success("✅ Data loaded successfully")
             if st.button("Reset / Upload New Data"):
@@ -256,9 +259,12 @@ with st.sidebar:
                 st.session_state.active_rec = None
                 st.session_state.trigger_reroll = False
                 st.session_state.local_storage_checked = False
-                st.session_state.clear_requested = True
-                st_javascript("localStorage.removeItem('movieRecData');")
-                st.rerun()
+                st.components.v1.html("""
+                    <script>
+                        localStorage.clear();
+                        window.parent.location.reload();
+                    </script>
+                """, height=0)
 
     if st.session_state.user_watchlist:
         st.markdown("---")
@@ -619,9 +625,17 @@ def render_featured_movie(title_text):
             if metadata.get('providers'):
                 st.write("### Where to Watch")
                 st.markdown(f"**Available to stream on:** {', '.join(metadata['providers'])}")
-                
-            if metadata.get('letterboxd_link'):
-                st.markdown(f"<br><a href='{metadata['letterboxd_link']}' target='_blank' style='display: inline-block; background-color: #1a1a1a; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; border: 1px solid #333;'>View on Letterboxd</a>", unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+            action_col1, action_col2 = st.columns(2)
+            with action_col1:
+                if metadata.get('letterboxd_link'):
+                    st.markdown(f"<a href='{metadata['letterboxd_link']}' target='_blank' style='display: flex; align-items: center; justify-content: center; background-color: #1a1a1a; color: white; padding: 0.6rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: 1px solid #333; width: 100%; box-sizing: border-box; min-height: 45px;'>View on Letterboxd</a>", unsafe_allow_html=True)
+            with action_col2:
+                share_text = f"Movie Recommendation: {metadata.get('title')} ({metadata.get('year', '')})\nTMDB Rating: {metadata.get('rating', '')}/10\nGenres: {', '.join(metadata.get('genres', []))}\nView Details: {metadata.get('letterboxd_link', '')}"
+                encoded_text = urllib.parse.quote(share_text)
+                whatsapp_url = f"https://api.whatsapp.com/send?text={encoded_text}"
+                st.markdown(f"<a href='{whatsapp_url}' target='_blank' style='display: flex; align-items: center; justify-content: center; background-color: #25D366; color: white; padding: 0.6rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: none; width: 100%; box-sizing: border-box; min-height: 45px;'>Share on WhatsApp</a>", unsafe_allow_html=True)
 
             st.markdown("<br>", unsafe_allow_html=True)
             fb_col1, fb_col2, fb_col3 = st.columns(3)
