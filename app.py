@@ -5,6 +5,7 @@ import json
 import os
 import io
 import urllib.request
+import urllib.parse
 import random
 import base64
 from colorthief import ColorThief
@@ -160,9 +161,11 @@ if not st.session_state.local_storage_checked:
         st.rerun()
 
 if st.session_state.save_requested:
+    ratings_to_store = [base64.b64encode(r).decode('utf-8') for r in st.session_state.ratings_data] if st.session_state.ratings_data else []
+    watched_to_store = [base64.b64encode(w).decode('utf-8') for w in st.session_state.watched_data] if st.session_state.watched_data else []
     data_to_store = {
-        'ratings': [base64.b64encode(r).decode('utf-8') for r in st.session_state.ratings_data],
-        'watched': [base64.b64encode(w).decode('utf-8') for w in st.session_state.watched_data],
+        'ratings': ratings_to_store,
+        'watched': watched_to_store,
         'mode': st.session_state.current_mode,
         'watchlist': st.session_state.user_watchlist,
         'ignore': st.session_state.user_ignore,
@@ -325,6 +328,16 @@ def get_dominant_color_wrapper(image_url):
         return "234, 88, 12" # #ea580c default
 
 def handle_feedback(action, title, is_featured=False):
+    if not st.session_state.data_submitted:
+        if action == "watchlist":
+            if title not in st.session_state.user_watchlist:
+                st.session_state.user_watchlist.append(title)
+            st.toast('Saved to your Watchlist!')
+            st.session_state.save_requested = True
+        elif action in ["watched", "ignore"]:
+            st.session_state.featured_movie = None
+        return
+
     if action == "watched":
         if title not in st.session_state.user_added_watched:
             st.session_state.user_added_watched.append(title)
@@ -481,7 +494,8 @@ def fetch_featured_movie(watched_list=None, ignore_list=None):
     if ignore_list is None: ignore_list = []
     import random
     
-    for page in range(1, 6):
+    for _ in range(5):
+        page = random.randint(1, 20)
         search_url = f"https://api.themoviedb.org/3/movie/popular?api_key={tmdb_key}&language=en-US&page={page}"
         try:
             res = requests.get(search_url)
@@ -492,7 +506,7 @@ def fetch_featured_movie(watched_list=None, ignore_list=None):
                 valid_movies = [m for m in movies if m.get('title') not in watched_list and m.get('title') not in ignore_list]
                 
                 if valid_movies:
-                    basic_movie = random.choice(valid_movies[:10] if len(valid_movies) >= 10 else valid_movies)
+                    basic_movie = random.choice(valid_movies)
                     movie_id = basic_movie.get('id')
                     title = basic_movie.get('title')
                     
@@ -715,11 +729,10 @@ if st.session_state.data_submitted and ratings_df_raw_list and watched_df_raw_li
                     if metadata.get('letterboxd_link'):
                         st.markdown(f"<a href='{metadata['letterboxd_link']}' target='_blank' style='display: flex; align-items: center; justify-content: center; background-color: #1a1a1a; color: white; padding: 0.6rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: 1px solid #333; width: 100%; box-sizing: border-box; min-height: 45px;'>View on Letterboxd</a>", unsafe_allow_html=True)
                 with action_col2:
-                    if st.button("Share Recommendation", use_container_width=True):
-                        share_text = f"🎬 Personalized Movie Recommendation from MovieRec:\n\n🍿 Movie: {rec_title}\n✨ Why it's a match: {rec_explanation}\n🔗 View on Letterboxd: {metadata.get('letterboxd_link', '')}"
-                        js_code = f"navigator.clipboard.writeText({json.dumps(share_text)});"
-                        st_javascript(js_code)
-                        st.toast("Share text copied to clipboard! Paste it in WhatsApp or Instagram.")
+                    share_text = f"Movie Recommendation: {rec_title} ({metadata.get('year', '')})\nTMDB Rating: {metadata.get('rating', '')}/10\nGenres: {', '.join(metadata.get('genres', []))}\nView Details: {metadata.get('letterboxd_link', '')}"
+                    encoded_text = urllib.parse.quote(share_text)
+                    whatsapp_url = f"https://api.whatsapp.com/send?text={encoded_text}"
+                    st.markdown(f"<a href='{whatsapp_url}' target='_blank' style='display: flex; align-items: center; justify-content: center; background-color: #25D366; color: white; padding: 0.6rem 2rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: none; width: 100%; box-sizing: border-box; min-height: 45px;'>Share on WhatsApp</a>", unsafe_allow_html=True)
 
             else:
                 st.subheader(rec_title)
