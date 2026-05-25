@@ -24,6 +24,20 @@ st.markdown("""
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
+    /* Force Dark Mode across Streamlit internal elements */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {
+        background-color: #0a0505 !important;
+        color: #f4f4f5 !important;
+    }
+    /* Ensure text inputs and selects remain dark */
+    div[data-baseweb="select"] > div {
+        background-color: #121212 !important;
+        color: #f4f4f5 !important;
+    }
+    [data-testid="stMarkdownContainer"] p {
+        color: #f4f4f5 !important;
+    }
+
     /* Primary Typography */
     h1, h2, h3 {
         color: #f4f4f5 !important;
