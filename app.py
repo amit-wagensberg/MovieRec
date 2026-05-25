@@ -386,79 +386,64 @@ def handle_feedback(action, title, is_featured=False):
     st.session_state.save_requested = True
 
 def generate_recommendation(top_rated_list, watched_list, ignore_list, genre, mode="Solo Mode"):
-    """Generates recommendation using Gemini 2.5 Flash via REST API."""
+    """Generates recommendation using Gemini 2.5 Flash via REST API with strict JSON formatting."""
     import random
     
-    # Since typical Letterboxd exports don't include genres, we extract a random sample of 
-    # up to 20 high-rated movies, relying on the prompt to emphasize the selected genre.
     sample_size = min(20, len(top_rated_list))
     sampled_top_rated = random.sample(top_rated_list, sample_size)
     all_top_rated_movies = ", ".join(sampled_top_rated)
     
-    # Restrict string size of watched list to avoid giant prompts
     max_watched = 2000
     if len(watched_list) > max_watched:
         watched_list = watched_list[:max_watched]
 
     ignore_str = ", ".join(ignore_list)
 
-    if mode == "Group Mode":
-        prompt = f"""A group of friends wants to watch a movie in the following specific category: "{genre}".
-        To help you understand their shared taste INSIDE this specific category, here is a combined sample of movies from this genre that they have highly rated (4.0+ stars) in the past: [{all_top_rated_movies}].
-        
-        Analyze these specific films to extract their preference patterns for this type of cinema. Then, recommend exactly ONE excellent "{genre}" movie.
+    # Tight JSON prompt forcing the model to structure data fields
+    prompt = f"""You are an advanced cinematic recommendation system.
+    The user wants to watch a movie in the specific category: "{genre}".
+    Here is a sample of movies they rated 4.0+ stars in this genre/history to map their taste: [{all_top_rated_movies}].
 
-        CRITICAL FILTERING GUARDRAILS:
-        1. You MUST NOT recommend any movie from this master watched list: [{watched_list}].
-        2. You MUST NOT recommend any movie from this ignored list: [{ignore_str}].
+    Analyze their style, pacing, and storytelling preferences based on these films, and recommend exactly ONE extraordinary movie in the "{genre}" genre.
 
-        Return ONLY the title and explanation separated by a pipe character (|). Do NOT use the word 'vibe'."""
-    else:
-        prompt = f"""The user wants to watch a movie in the following specific category: "{genre}".
-        To help you understand their precise preference within this specific genre, here is a random sample of movies from this exact category that they have highly rated (4.0+ stars) in their Letterboxd history: [{all_top_rated_movies}].
-        
-        Deeply analyze these specific films to understand what style, pacing, and storytelling they enjoy when watching a "{genre}" movie. Based on this, recommend exactly ONE extraordinary "{genre}" movie that matches this preference profile perfectly.
+    CRITICAL FILTERING GUARDRAILS:
+    1. The recommendation must NOT be any movie listed in the sample above.
+    2. You MUST NOT recommend any movie from this watched list: [{watched_list}].
+    3. You MUST NOT recommend any movie from this ignored list: [{ignore_str}].
 
-        CRITICAL FILTERING GUARDRAILS:
-        1. The recommendation must NOT be any movie listed in the favorites above.
-        2. You MUST NOT recommend any movie from this watched list: [{watched_list}].
-        3. You MUST NOT recommend any movie from this ignored list: [{ignore_str}].
-
-        Return ONLY the title and a professional explanation separated by a pipe character (|). Do NOT use the word 'vibe'."""
+    You MUST respond with a single, valid JSON object only. Do NOT wrap the response in markdown blocks (like ```json) or add any extra prose.
+    
+    Required JSON structure:
+    {{
+        "title": "Exact Movie Title Only",
+        "explanation": "A short, professional explanation of why this movie matches their taste."
+    }}"""
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key.strip()}"
     headers = {'Content-Type': 'application/json'}
     payload = {
         "contents": [{
             "parts": [{"text": prompt}]
-        }]
+        }],
+        "generationConfig": {
+            "responseMimeType": "application/json"
+        }
     }
 
     try:
         response = requests.post(url, headers=headers, data=json.dumps(payload))
-        
-        # Explicit error message extraction to inform the user about key expiry
-        if response.status_code == 400:
-            err_data = response.json()
-            err_msg = err_data.get("error", {}).get("message", "Unknown Bad Request")
-            st.error(f"Gemini API Error (400 Bad Request): {err_msg}")
-            return None, None
-            
         response.raise_for_status()
         data = response.json()
 
         text = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
-
-        # Parse title and explanation based on pipe delimiter
-        if "|" in text:
-            parts = text.split("|", 1)
-            return parts[0].strip(), parts[1].strip()
-        else:
-            # Fallback if AI didn't follow formatting strictly
-            return text.replace("Title:", "").replace("*", "").strip(), "A professional cinematic recommendation tailored to your taste."
+        
+        # Safely parse the JSON output
+        result = json.loads(text)
+        return result.get("title", "").strip(), result.get("explanation", "").strip()
 
     except Exception as e:
-        st.error(f"Failed to generate recommendation via Gemini API: {e}")
+        # If anything parsing fails, fallback gracefully without breaking TMDB
+        st.error(f"Failed to generate valid recommendation: {e}")
         return None, None
 
 def fetch_tmdb_metadata(movie_title):
