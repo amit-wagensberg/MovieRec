@@ -399,25 +399,46 @@ def generate_recommendation(top_rated_list, watched_list, ignore_list, genre, mo
 
     ignore_str = ", ".join(ignore_list)
 
-    # Tight JSON prompt forcing the model to structure data fields
-    prompt = f"""You are an advanced cinematic recommendation system.
-    The user wants to watch a movie in the specific category: "{genre}".
-    Here is a sample of movies they rated 4.0+ stars in this genre/history to map their taste: [{all_top_rated_movies}].
+    if mode == "Group Mode":
+        prompt = f"""You are an advanced cinematic recommendation system.
+        A group of friends wants to watch a movie in the specific category: "{genre}".
+        Here is a combined sample of movies they rated 4.0+ stars in this genre/history to map their taste: [{all_top_rated_movies}].
 
-    Analyze their style, pacing, and storytelling preferences based on these films, and recommend exactly ONE extraordinary movie in the "{genre}" genre.
+        Analyze their shared style, pacing, and storytelling preferences based on these films, and recommend exactly ONE extraordinary movie in the "{genre}" genre.
 
-    CRITICAL FILTERING GUARDRAILS:
-    1. The recommendation must NOT be any movie listed in the sample above.
-    2. You MUST NOT recommend any movie from this watched list: [{watched_list}].
-    3. You MUST NOT recommend any movie from this ignored list: [{ignore_str}].
+        CRITICAL FILTERING GUARDRAILS:
+        1. The recommendation must NOT be any movie listed in the sample above.
+        2. You MUST NOT recommend any movie from this watched list: [{watched_list}].
+        3. You MUST NOT recommend any movie from this ignored list: [{ignore_str}].
 
-    You MUST respond with a single, valid JSON object only. Do NOT wrap the response in markdown blocks (like ```json) or add any extra prose.
-    
-    Required JSON structure:
-    {{
-        "title": "Exact Movie Title Only",
-        "explanation": "A short, professional explanation of why this movie matches their taste."
-    }}"""
+        You MUST respond with a single, valid JSON object only. Do NOT wrap the response in markdown blocks (like ```json) or add any extra prose.
+        
+        Required JSON structure:
+        {{
+            "title": "Exact Movie Title Only",
+            "explanation": "A short, professional explanation of why this movie matches their taste."
+        }}"""
+    else:
+        prompt = f"""You are an advanced film critic and recommendation system.
+        The user wants to watch a movie in the specific category: "{genre}".
+        
+        Here is a dynamic sample of up to 20 movies they highly rated (4.0+ stars) in their Letterboxd history: [{all_top_rated_movies}].
+
+        YOUR HIERARCHICAL ANALYSIS STEP-BY-STEP:
+        1. GENRE-SPECIFIC FOCUS: First, scan the sample list for any movies that belong to or overlap with the "{genre}" genre. Observe what specific style, sub-genre, or tone they prefer when they are in the mood for this type of cinema.
+        2. CORE QUALITY ANCHORS: Look at the broader list to find non-negotiable artistic traits they love across genres. Do not average out superficial traits like pacing (the user appreciates both fast-paced action and atmospheric slow-burns depending on context). Instead, look for structural signatures: do they value intricate puzzle plots, intense psychological tension, sharp witty writing, or distinct visual flair?
+        3. SYNTHESIS: Adapt those core quality anchors into the target "{genre}" category. Recommend exactly ONE extraordinary movie that delivers the baseline brilliance they expect from cinema, tailored seamlessly to the requested genre.
+
+        CRITICAL FILTERING GUARDRAILS:
+        1. The recommendation must NOT be any movie listed in the sample or history above.
+        2. You MUST NOT recommend any movie from this watched list: [{watched_list}].
+        3. You MUST NOT recommend any movie from this ignored list: [{ignore_str}].
+
+        Your response MUST be a single, valid JSON object with no markdown wrappers:
+        {{
+            "title": "Exact Movie Title Only",
+            "explanation": "A concise 2-sentence explanation. Explicitly highlight how the recommended film's structural quality or tone connects to specific elements in their watch history."
+        }}"""
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key.strip()}"
     headers = {'Content-Type': 'application/json'}
