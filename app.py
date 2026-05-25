@@ -387,7 +387,13 @@ def handle_feedback(action, title, is_featured=False):
 
 def generate_recommendation(top_rated_list, watched_list, ignore_list, genre, mode="Solo Mode"):
     """Generates recommendation using Gemini 2.5 Flash via REST API."""
-    all_top_rated_movies = ", ".join(top_rated_list)
+    import random
+    
+    # Since typical Letterboxd exports don't include genres, we extract a random sample of 
+    # up to 20 high-rated movies, relying on the prompt to emphasize the selected genre.
+    sample_size = min(20, len(top_rated_list))
+    sampled_top_rated = random.sample(top_rated_list, sample_size)
+    all_top_rated_movies = ", ".join(sampled_top_rated)
     
     # Restrict string size of watched list to avoid giant prompts
     max_watched = 2000
@@ -397,19 +403,28 @@ def generate_recommendation(top_rated_list, watched_list, ignore_list, genre, mo
     ignore_str = ", ".join(ignore_list)
 
     if mode == "Group Mode":
-        prompt = f"""A group of friends has combined their highly rated movies (4.0 stars and above), representing their shared taste: [{all_top_rated_movies}]. Based on this combined taste profile, recommend exactly one {genre} movie. Crucially, ensure the recommendation is NOT included in this master watched list: [{watched_list}], meaning nobody in the group has seen it. 
-        CRITICAL: You MUST NOT recommend any movie from this watched list: [{watched_list}], AND you MUST NOT recommend any movie from this ignored list: [{ignore_str}].
-        Return ONLY the title and a short explanation of why this movie is a perfect match for their specific taste, separated by a pipe character (|). Do NOT use the word 'vibe' in your response.
-        Example: Perfect Blue | Recommended because it shares the intense psychological depth, surreal visual style, and complex character studies found in your top-rated films."""
+        prompt = f"""A group of friends wants to watch a movie in the following specific category: "{genre}".
+        To help you understand their shared taste INSIDE this specific category, here is a combined sample of movies from this genre that they have highly rated (4.0+ stars) in the past: [{all_top_rated_movies}].
+        
+        Analyze these specific films to extract their preference patterns for this type of cinema. Then, recommend exactly ONE excellent "{genre}" movie.
+
+        CRITICAL FILTERING GUARDRAILS:
+        1. You MUST NOT recommend any movie from this master watched list: [{watched_list}].
+        2. You MUST NOT recommend any movie from this ignored list: [{ignore_str}].
+
+        Return ONLY the title and explanation separated by a pipe character (|). Do NOT use the word 'vibe'."""
     else:
-        # AGENTS.md precise prompting context
-        prompt = f"""The user has highly rated the following movies (4.0 stars and above), which represent their complete cinematic taste profile: [{all_top_rated_movies}].
+        prompt = f"""The user wants to watch a movie in the following specific category: "{genre}".
+        To help you understand their precise preference within this specific genre, here is a random sample of movies from this exact category that they have highly rated (4.0+ stars) in their Letterboxd history: [{all_top_rated_movies}].
+        
+        Deeply analyze these specific films to understand what style, pacing, and storytelling they enjoy when watching a "{genre}" movie. Based on this, recommend exactly ONE extraordinary "{genre}" movie that matches this preference profile perfectly.
 
-        Based on analyzing this entire list, recommend exactly one {genre} movie that they haven't seen yet.
-        CRITICAL: You MUST NOT recommend any movie from this watched list: [{watched_list}], AND you MUST NOT recommend any movie from this ignored list: [{ignore_str}].
+        CRITICAL FILTERING GUARDRAILS:
+        1. The recommendation must NOT be any movie listed in the favorites above.
+        2. You MUST NOT recommend any movie from this watched list: [{watched_list}].
+        3. You MUST NOT recommend any movie from this ignored list: [{ignore_str}].
 
-        Return ONLY the title and a short, professional explanation of why this movie is a perfect match for their specific taste, separated by a pipe character (|). Do NOT use the word 'vibe' in your response.
-        Example: Perfect Blue | Recommended because it shares the intense psychological depth, surreal visual style, and complex character studies found in your top-rated films."""
+        Return ONLY the title and a professional explanation separated by a pipe character (|). Do NOT use the word 'vibe'."""
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key.strip()}"
     headers = {'Content-Type': 'application/json'}
