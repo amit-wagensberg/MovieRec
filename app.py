@@ -506,7 +506,7 @@ def fetch_featured_movie(watched_list=None, ignore_list=None):
     import random
     
     for _ in range(5):
-        page = random.randint(1, 20)
+        page = random.randint(1, 2)
         search_url = f"https://api.themoviedb.org/3/movie/popular?api_key={tmdb_key}&language=en-US&page={page}"
         try:
             res = requests.get(search_url)
