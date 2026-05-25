@@ -416,7 +416,7 @@ def generate_recommendation(top_rated_list, watched_list, ignore_list, genre, mo
         Required JSON structure:
         {{
             "title": "Exact Movie Title Only",
-            "explanation": "A short, professional explanation of why this movie matches their taste."
+            "explanation": "A short, professional explanation of why this movie matches their taste. CRITICAL: Do NOT name, list, or mention any specific movie titles from their history in this explanation. Focus purely on the qualities of the recommended movie itself."
         }}"""
     else:
         prompt = f"""You are an advanced film critic and recommendation system.
@@ -437,7 +437,7 @@ def generate_recommendation(top_rated_list, watched_list, ignore_list, genre, mo
         Your response MUST be a single, valid JSON object with no markdown wrappers:
         {{
             "title": "Exact Movie Title Only",
-            "explanation": "A concise 2-sentence explanation. Explicitly highlight how the recommended film's structural quality or tone connects to specific elements in their watch history."
+            "explanation": "A concise 2-sentence explanation. Explicitly highlight how the recommended film's structural quality or tone connects to specific elements in their watch history. CRITICAL: Do NOT name, list, or mention any specific movie titles from their history in this explanation. Focus purely on the qualities of the recommended movie itself."
         }}"""
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key.strip()}"
