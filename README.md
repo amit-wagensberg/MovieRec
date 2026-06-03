@@ -1,4 +1,4 @@
-# MovieRec - https://movierec-wu5jxwnnwievum8qyhuxgb.streamlit.app/
+# MovieRec
 
 Advanced Cinematic Intelligence Engine
 

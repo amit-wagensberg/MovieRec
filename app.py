@@ -410,6 +410,7 @@ def generate_recommendation(top_rated_list, watched_list, ignore_list, genre, mo
         1. The recommendation must NOT be any movie listed in the sample above.
         2. You MUST NOT recommend any movie from this watched list: [{watched_list}].
         3. You MUST NOT recommend any movie from this ignored list: [{ignore_str}].
+        4. GENRE LOCK: The recommended movie MUST officially and strictly belong to the requested genre. Do not recommend a movie from a different genre under any circumstances.
 
         You MUST respond with a single, valid JSON object only. Do NOT wrap the response in markdown blocks (like ```json) or add any extra prose.
         
@@ -433,6 +434,7 @@ def generate_recommendation(top_rated_list, watched_list, ignore_list, genre, mo
         1. The recommendation must NOT be any movie listed in the sample or history above.
         2. You MUST NOT recommend any movie from this watched list: [{watched_list}].
         3. You MUST NOT recommend any movie from this ignored list: [{ignore_str}].
+        4. GENRE LOCK: The recommended movie MUST officially and strictly belong to the requested genre. Do not recommend a movie from a different genre under any circumstances.
 
         Your response MUST be a single, valid JSON object with no markdown wrappers:
         {{
@@ -542,7 +544,7 @@ def fetch_featured_movie(watched_list=None, ignore_list=None):
     
     for _ in range(5):
         page = random.randint(1, 2)
-        search_url = f"https://api.themoviedb.org/3/movie/popular?api_key={tmdb_key}&language=en-US&page={page}"
+        search_url = f"https://api.themoviedb.org/3/discover/movie?api_key={tmdb_key}&language=en-US&page={page}&vote_count.gte=3000&vote_average.gte=7.0"
         try:
             res = requests.get(search_url)
             res.raise_for_status()
