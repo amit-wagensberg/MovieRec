@@ -2,6 +2,8 @@
 
 Advanced Cinematic Intelligence Engine
 
+🚀 **Live Demo:** [https://movierec-wu5jxwnnwievum8qyhuxgb.streamlit.app/](https://movierec-wu5jxwnnwievum8qyhuxgb.streamlit.app/)
+
 MovieRec is a sophisticated recommendation system that ingests your personal **Letterboxd export data** to build a comprehensive profile of your cinematic DNA. By combining local data processing with the reasoning capabilities of the **Gemini 2.5 Flash API**, it delivers pinpoint, context-aware movie recommendations cross-referenced with deep metadata from the **TMDB API**, guaranteeing you are never recommended a film you have already watched.
 
 ---
