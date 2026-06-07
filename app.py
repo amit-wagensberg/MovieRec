@@ -385,6 +385,7 @@ def handle_feedback(action, title, is_featured=False):
         st.toast('Saved to your Watchlist!')
     st.session_state.save_requested = True
 
+@st.cache_data(show_spinner="Computing smart recommendation...")
 def generate_recommendation(top_rated_list, watched_list, ignore_list, genre, mode="Solo Mode"):
     """Generates recommendation using Gemini 2.5 Flash via REST API with strict JSON formatting."""
     import random
@@ -442,7 +443,8 @@ def generate_recommendation(top_rated_list, watched_list, ignore_list, genre, mo
             "explanation": "A concise 2-sentence explanation. Explicitly highlight how the recommended film's structural quality or tone connects to specific elements in their watch history. CRITICAL: Do NOT name, list, or mention any specific movie titles from their history in this explanation. Focus purely on the qualities of the recommended movie itself."
         }}"""
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key.strip()}"
+    api_key = st.secrets["GEMINI_API_KEY"].strip()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     headers = {'Content-Type': 'application/json'}
     payload = {
         "contents": [{
@@ -464,6 +466,13 @@ def generate_recommendation(top_rated_list, watched_list, ignore_list, genre, mo
         result = json.loads(text)
         return result.get("title", "").strip(), result.get("explanation", "").strip()
 
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 429:
+            st.error("API rate limit exceeded (429 Too Many Requests). Please wait about 60 seconds and try again.")
+            return None, None
+        else:
+            st.error(f"Failed to generate valid recommendation: {e}")
+            return None, None
     except Exception as e:
         # If anything parsing fails, fallback gracefully without breaking TMDB
         st.error(f"Failed to generate valid recommendation: {e}")
